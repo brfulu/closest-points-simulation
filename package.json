@@ -1,0 +1,19 @@
+{
+  "name": "closest-points-simulation",
+  "version": "1.0.0",
+  "description": "Simulation of several algorithms for solving the closest pair of points problem.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/brfulu/closest-points-simulation.git"
+  },
+  "author": "brfulu",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/brfulu/closest-points-simulation/issues"
+  },
+  "homepage": "https://github.com/brfulu/closest-points-simulation#readme"
+}
