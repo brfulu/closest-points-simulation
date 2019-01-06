@@ -4,27 +4,59 @@ export default class ClosestPoints {
 
   bruteForce(points) {
     let minDistance = Number.MAX_VALUE;
+    let pointA, pointB;
+
     for (let i = 0; i < points.length; i++) {
       for (let j = i + 1; j < points.length; j++) {
         let distance = this._getDistance(points[i], points[j]);
         if (distance < minDistance) {
           minDistance = distance;
+          pointA = points[i];
+          pointB = points[j];
         }
       }
     }
-    return minDistance;
+    return {
+      distance: minDistance,
+      pointA,
+      pointB
+    };
   }
 
   divideAndConquer(points) {
+    this.events = []
     this.points = points;
-    this.pointsOrderedByX = points.sort((a, b) => a.x - b.x);
-    this.pointsOrderedByY = points.sort((a, b) => a.y - b.y);
-    return this._closestPair(this.pointsOrderedByX);
+
+    points.sort((a, b) => a.x - b.x);
+    this.pointsOrderedByX = points.slice();
+
+    points.sort((a, b) => a.y - b.y);
+    this.pointsOrderedByY = points.slice();
+
+    let result = this._closestPair(this.pointsOrderedByX);
+    return {
+      distance: result.distance,
+      events: this.events
+    };
   }
 
   _closestPair(points) {
+    this.events.push({
+      type: 'highlightRect',
+      x: points[0].x - 6,
+      y: 0,
+      width: points[points.length - 1].x - points[0].x + 12,
+      height: 500
+    });
+
     if (points.length <= 3) {
-      return this.bruteForce(points);
+      let bruteResult = this.bruteForce(points);
+      this.events.push({
+        type: 'drawLine',
+        pointA: bruteResult.pointA,
+        pointB: bruteResult.pointB
+      });
+      return bruteResult;
     }
 
     let middleIndex = Math.floor(points.length / 2);
@@ -33,14 +65,53 @@ export default class ClosestPoints {
     let leftPoints = points.slice(0, middleIndex);
     let rightPoints = points.slice(middleIndex);
 
-    let minDistanceLeft = this._closestPair(leftPoints);
-    let minDistanceRight = this._closestPair(rightPoints);
-    let minDinstanceCombined = Math.min(minDistanceLeft, minDistanceRight);
+    let leftResult = this._closestPair(leftPoints);
+    let minDistanceLeft = leftResult.distance;
 
-    let strip = this.pointsOrderedByY.filter(point => this._getDistance(point, middlePoint));
-    let minDistanceStrip = this._getMinimumDistanceStrip(strip);
+    let rightResult = this._closestPair(rightPoints);
+    let minDistanceRight = rightResult.distance;
 
-    return Math.min(minDinstanceCombined, minDistanceStrip);
+    let combinedResult = leftResult.distance < rightResult.distance ? leftResult : rightResult;
+
+    this.events.push({
+      type: 'combine',
+      x: points[0].x - 6,
+      y: 0,
+      width: points[points.length - 1].x - points[0].x + 12,
+      height: 500,
+      pointA: combinedResult.pointA,
+      pointB: combinedResult.pointB
+    });
+
+    let strip = this.pointsOrderedByY.filter(point => {
+      return Math.abs(point.x - middlePoint.x) <= combinedResult.distance
+        && point.x >= points[0].x
+        && point.x <= points[points.length - 1].x;
+    });
+
+
+    this.events.push({
+      type: 'highlightStrip',
+      x: Math.max(points[0].x - 6, middlePoint.x - combinedResult.distance - 6),
+      y: 0,
+      width: Math.min(points[points.length - 1].x - Math.max(points[0].x, middlePoint.x - combinedResult.distance - 6), 2 * combinedResult.distance + 12),
+      height: 500,
+      pointA: combinedResult.pointA,
+      pointB: combinedResult.pointB
+    });
+    let stripResult = this._getMinimumDistanceStrip(strip);
+
+    let totalResult = combinedResult.distance < stripResult.distance ? combinedResult : stripResult;
+    this.events.push({
+      type: 'highlightResult',
+      x: points[0].x - 6,
+      y: 0,
+      width: points[points.length - 1].x - points[0].x + 12,
+      height: 500,
+      pointA: totalResult.pointA,
+      pointB: totalResult.pointB
+    });
+    return totalResult;
   }
 
   _getDistance(first, second) {
@@ -49,11 +120,26 @@ export default class ClosestPoints {
 
   _getMinimumDistanceStrip(strip) {
     let minDistance = Number.MAX_VALUE;
+    let pointA, pointB;
     for (let i = 0; i < strip.length; i++) {
       for (let j = i + 1; j < strip.length && j - i <= 15; j++) {
-        minDistance = Math.min(minDistance, this._getDistance(strip[i], strip[j]));
+        if (this._getDistance(strip[i], strip[j]) < minDistance) {
+          minDistance = this._getDistance(strip[i], strip[j]);
+          pointA = strip[i];
+          pointB = strip[j];
+        }
+
+        this.events.push({
+          type: 'highlightPoints',
+          pointA: strip[i],
+          pointB: strip[j]
+        });
       }
     }
-    return minDistance;
+    return {
+      distance: minDistance,
+      pointA,
+      pointB
+    };
   }
 }
