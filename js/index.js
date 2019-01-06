@@ -129,8 +129,6 @@ function next() {
     let event = events[eventIndex];
     if (event.type == 'highlightRect') {
       highlightRect(event.x, event.y, event.width, event.height, '#fef36f');
-    } else if (event.type == 'clearHighlightRect') {
-      highlightRect(event.x, event.y, event.width, event.height, '#f8f5f0');
     } else if (event.type == 'drawLine') {
       drawLine(event.pointA, event.pointB);
     } else if (event.type == 'highlightPoints') {
