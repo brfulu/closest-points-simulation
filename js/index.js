@@ -19,7 +19,7 @@ const nextButton = document.getElementById('next');
 const backButton = document.getElementById('back');
 const startButton = document.getElementById('start');
 
-const points = [];
+let points = [];
 let eventIndex = -1;
 let events = [];
 
@@ -91,7 +91,7 @@ function highlightPoint(x, y, color) {
   ctx.fill();
 
   ctx.strokeStyle = color;
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 3;
   ctx.stroke();
   ctx.restore();
 }
@@ -108,6 +108,9 @@ function highlightRect(x, y, width, height, color) {
 function clearCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   points = [];
+  console.log('evo me');
+  nextButton.style.display = 'none';
+  backButton.style.display = 'none';
 }
 
 function next() {
@@ -161,10 +164,11 @@ function back() {
 }
 
 function start() {
-  const closestPoints = new ClosestPoints();
-  const result = closestPoints.divideAndConquer(points);
+  let closestPoints = new ClosestPoints();
+  let result = closestPoints.divideAndConquer(points);
   events = result.events;
-  console.log(result);
+  nextButton.style.display = 'inline';
+  backButton.style.display = 'inline';
 }
 
 canvas.addEventListener('click', drawOnClick);
