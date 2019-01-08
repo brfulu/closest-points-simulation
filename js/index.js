@@ -108,6 +108,7 @@ function highlightRect(x, y, width, height, color) {
 function clearCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   points = [];
+  eventIndex = 0;
   console.log('evo me');
   nextButton.style.display = 'none';
   backButton.style.display = 'none';
