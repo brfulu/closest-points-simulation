@@ -15,5 +15,8 @@
   "bugs": {
     "url": "https://github.com/brfulu/closest-points-simulation/issues"
   },
-  "homepage": "https://github.com/brfulu/closest-points-simulation#readme"
+  "homepage": "https://github.com/brfulu/closest-points-simulation#readme",
+  "devDependencies": {
+    "cssnano": "^4.1.8"
+  }
 }
