@@ -1,5 +1,6 @@
 body {
-  background-color: #EDECEA;
+  background-color: #0E0A19;
+  color: white;
 }
 
 main {
@@ -7,8 +8,8 @@ main {
 }
 
 #canvas {
-  background-color: #f8f5f0;
-  border: 2px solid black;
+  background-color: #c7c4c0;
+  border: 5px solid #4E9AF1;
   cursor: crosshair;
   margin: 0 auto;
 }

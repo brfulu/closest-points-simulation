@@ -37,11 +37,11 @@ function drawPoint(x, y) {
   ctx.beginPath();
   ctx.arc(x, y, pointSize, 0, Math.PI * 2, true);
 
-  ctx.fillStyle = "#0000ff";
+  ctx.fillStyle = "#4E9AF1";
   ctx.fill();
 
   ctx.strokeStyle = "#000000";
-  ctx.lineWidth = 1;
+  ctx.lineWidth = 2;
   ctx.stroke();
   ctx.restore();
 }
@@ -74,8 +74,8 @@ function drawLabel(text, p1, p2, padding) {
 
   ctx.save();
   ctx.textAlign = alignment;
-  ctx.fillStyle = '#4cbb50';
-  ctx.font = 'bold 20px Arial';
+  ctx.fillStyle = '#0E0A19';
+  ctx.font = 'bold 17px Arial';
   ctx.translate(p.x + dx * pad, p.y + dy * pad);
   ctx.rotate(Math.atan2(dy, dx));
   ctx.fillText(text, 0, 0);
@@ -118,7 +118,7 @@ function next() {
     if (eventIndex >= 0) {
       let event = events[eventIndex];
       if (event.type == 'highlightRect') {
-        highlightRect(event.x, event.y, event.width, event.height, '#f8f5f0');
+        highlightRect(event.x, event.y, event.width, event.height, '#C7C4C0');
       } else if (event.type == 'highlightPoints') {
         highlightPoint(event.pointA.x, event.pointA.y, '#00000');
         highlightPoint(event.pointB.x, event.pointB.y, '#00000');
@@ -131,18 +131,32 @@ function next() {
       highlightRect(event.x, event.y, event.width, event.height, '#fef36f');
     } else if (event.type == 'drawLine') {
       drawLine(event.pointA, event.pointB);
+      drawLabel(event.label, event.pointA, event.pointB);
+      //console.log('label = ' + event.label);
     } else if (event.type == 'highlightPoints') {
       highlightPoint(event.pointA.x, event.pointA.y, '#ff0000');
       highlightPoint(event.pointB.x, event.pointB.y, '#ff0000');
     } else if (event.type == 'combine') {
       highlightRect(event.x, event.y, event.width, event.height, '#fef36f');
       drawLine(event.pointA, event.pointB);
+      drawLabel(event.label, event.pointA, event.pointB);
     } else if (event.type == 'highlightStrip') {
       highlightRect(event.x, event.y, event.width, event.height, '#4CAF50');
       drawLine(event.pointA, event.pointB);
     } else if (event.type == 'highlightResult') {
       highlightRect(event.x, event.y, event.width, event.height, '#fef36f');
       drawLine(event.pointA, event.pointB);
+      drawLabel(event.label, event.pointA, event.pointB);
+    } else if (event.type == 'highlightLeftRight') {
+      highlightRect(event.x, event.y, event.width, event.height, '#fef36f');
+      drawLine(event.pointLeftA, event.pointLeftB);
+      drawLabel(event.labelLeft, event.pointLeftA, event.pointLeftB);
+      drawLine(event.pointRightA, event.pointRightB);
+      drawLabel(event.labelRight, event.pointRightA, event.pointRightB);
+    } else if (event.type == 'highlightFinish') {
+      highlightRect(0, 0, 1024, 530, '#C7C4C0');
+      drawLine(event.pointA, event.pointB);
+      drawLabel(event.label, event.pointA, event.pointB);
     }
   }
 }

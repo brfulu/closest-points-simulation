@@ -40,13 +40,13 @@ export default class ClosestPoints {
     };
   }
 
-  _closestPair(points) {
+  _closestPair(points, childType) {
     this.events.push({
       type: 'highlightRect',
       x: points[0].x - 6,
       y: 0,
       width: points[points.length - 1].x - points[0].x + 12,
-      height: 500
+      height: 530
     });
 
     if (points.length <= 3) {
@@ -54,7 +54,8 @@ export default class ClosestPoints {
       this.events.push({
         type: 'drawLine',
         pointA: bruteResult.pointA,
-        pointB: bruteResult.pointB
+        pointB: bruteResult.pointB,
+        label: 'd'
       });
       return bruteResult;
     }
@@ -65,11 +66,25 @@ export default class ClosestPoints {
     let leftPoints = points.slice(0, middleIndex);
     let rightPoints = points.slice(middleIndex);
 
-    let leftResult = this._closestPair(leftPoints);
+    let leftResult = this._closestPair(leftPoints, 'left');
     let minDistanceLeft = leftResult.distance;
 
-    let rightResult = this._closestPair(rightPoints);
+    let rightResult = this._closestPair(rightPoints, 'right');
     let minDistanceRight = rightResult.distance;
+
+    this.events.push({
+      type: 'highlightLeftRight',
+      x: points[0].x - 6,
+      y: 0,
+      width: points[points.length - 1].x - points[0].x + 12,
+      height: 530,
+      pointLeftA: leftResult.pointA,
+      pointLeftB: leftResult.pointB,
+      labelLeft: 'dl',
+      pointRightA: rightResult.pointA,
+      pointRightB: rightResult.pointB,
+      labelRight: 'dr'
+    });
 
     let combinedResult = leftResult.distance < rightResult.distance ? leftResult : rightResult;
 
@@ -78,9 +93,10 @@ export default class ClosestPoints {
       x: points[0].x - 6,
       y: 0,
       width: points[points.length - 1].x - points[0].x + 12,
-      height: 500,
+      height: 530,
       pointA: combinedResult.pointA,
-      pointB: combinedResult.pointB
+      pointB: combinedResult.pointB,
+      label: 'd'
     });
 
     let strip = this.pointsOrderedByY.filter(point => {
@@ -95,7 +111,7 @@ export default class ClosestPoints {
       x: Math.max(points[0].x - 6, middlePoint.x - combinedResult.distance - 6),
       y: 0,
       width: Math.min(points[points.length - 1].x - Math.max(points[0].x, middlePoint.x - combinedResult.distance - 6), 2 * combinedResult.distance + 12),
-      height: 500,
+      height: 530,
       pointA: combinedResult.pointA,
       pointB: combinedResult.pointB
     });
@@ -103,13 +119,14 @@ export default class ClosestPoints {
 
     let totalResult = combinedResult.distance < stripResult.distance ? combinedResult : stripResult;
     this.events.push({
-      type: 'highlightResult',
+      type: (points.length == this.points.length ? 'highlightFinish' : 'highlightResult'),
       x: points[0].x - 6,
       y: 0,
       width: points[points.length - 1].x - points[0].x + 12,
-      height: 500,
+      height: 530,
       pointA: totalResult.pointA,
-      pointB: totalResult.pointB
+      pointB: totalResult.pointB,
+      label: 'd'
     });
     return totalResult;
   }
