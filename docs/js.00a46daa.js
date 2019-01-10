@@ -172,7 +172,7 @@ function () {
     }
   }, {
     key: "_closestPair",
-    value: function _closestPair(points, childType) {
+    value: function _closestPair(points) {
       this.events.push({
         type: 'highlightRect',
         x: points[0].x - 6,
@@ -197,11 +197,11 @@ function () {
       var leftPoints = points.slice(0, middleIndex);
       var rightPoints = points.slice(middleIndex);
 
-      var leftResult = this._closestPair(leftPoints, 'left');
+      var leftResult = this._closestPair(leftPoints);
 
       var minDistanceLeft = leftResult.distance;
 
-      var rightResult = this._closestPair(rightPoints, 'right');
+      var rightResult = this._closestPair(rightPoints);
 
       var minDistanceRight = rightResult.distance;
       this.events.push({
@@ -228,9 +228,16 @@ function () {
         pointB: combinedResult.pointB,
         label: 'd'
       });
-      var strip = this.pointsOrderedByY.filter(function (point) {
-        return Math.abs(point.x - middlePoint.x) <= combinedResult.distance && point.x >= points[0].x && point.x <= points[points.length - 1].x;
-      });
+      var strip = [];
+
+      for (var i = 0; i < points.length; i++) {
+        var point = points[i];
+
+        if (Math.abs(point.x - middlePoint.x) <= combinedResult.distance && point.x >= points[0].x && point.x <= points[points.length - 1].x) {
+          strip.push(point);
+        }
+      }
+
       this.events.push({
         type: 'highlightStrip',
         x: Math.max(points[0].x - 6, middlePoint.x - combinedResult.distance - 6),
@@ -241,9 +248,9 @@ function () {
         pointB: combinedResult.pointB
       });
 
-      var stripResult = this._getMinimumDistanceStrip(strip);
+      var stripResult = this._getMinimumDistanceStrip(strip, combinedResult.distance);
 
-      var totalResult = combinedResult.distance < stripResult.distance ? combinedResult : stripResult;
+      var totalResult = stripResult.distance < combinedResult.distance ? stripResult : combinedResult;
       this.events.push({
         type: points.length == this.points.length ? 'highlightFinish' : 'highlightResult',
         x: points[0].x - 6,
@@ -263,23 +270,149 @@ function () {
     }
   }, {
     key: "_getMinimumDistanceStrip",
-    value: function _getMinimumDistanceStrip(strip) {
-      var minDistance = Number.MAX_VALUE;
+    value: function _getMinimumDistanceStrip(strip, d) {
+      var minDistance = d;
       var pointA, pointB;
 
       for (var i = 0; i < strip.length; i++) {
-        for (var j = i + 1; j < strip.length && j - i <= 15; j++) {
+        for (var j = i + 1; j < strip.length && strip[j].y - strip[i].y < d; j++) {
           if (this._getDistance(strip[i], strip[j]) < minDistance) {
             minDistance = this._getDistance(strip[i], strip[j]);
             pointA = strip[i];
             pointB = strip[j];
           }
+        }
+      }
 
-          this.events.push({
-            type: 'highlightPoints',
-            pointA: strip[i],
-            pointB: strip[j]
-          });
+      return {
+        distance: minDistance,
+        pointA: pointA,
+        pointB: pointB
+      };
+    }
+  }]);
+
+  return ClosestPoints;
+}();
+
+exports.default = ClosestPoints;
+},{}],"js/closest-points-pure.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var ClosestPoints =
+/*#__PURE__*/
+function () {
+  function ClosestPoints() {
+    _classCallCheck(this, ClosestPoints);
+  }
+
+  _createClass(ClosestPoints, [{
+    key: "bruteForce",
+    value: function bruteForce(points) {
+      var minDistance = Number.MAX_VALUE;
+      var pointA, pointB;
+
+      for (var i = 0; i < points.length; i++) {
+        for (var j = i + 1; j < points.length; j++) {
+          var distance = this._getDistance(points[i], points[j]);
+
+          if (distance < minDistance) {
+            minDistance = distance;
+            pointA = points[i];
+            pointB = points[j];
+          }
+        }
+      }
+
+      return {
+        distance: minDistance,
+        pointA: pointA,
+        pointB: pointB
+      };
+    }
+  }, {
+    key: "divideAndConquer",
+    value: function divideAndConquer(points) {
+      this.points = points;
+      points.sort(function (a, b) {
+        return a.x - b.x;
+      });
+      this.pointsOrderedByX = points.slice();
+      points.sort(function (a, b) {
+        return a.y - b.y;
+      });
+      this.pointsOrderedByY = points.slice();
+
+      var result = this._closestPair(this.pointsOrderedByX);
+
+      return {
+        distance: result.distance,
+        pointA: result.pointA,
+        pointB: result.pointB
+      };
+    }
+  }, {
+    key: "_closestPair",
+    value: function _closestPair(points) {
+      if (points.length <= 3) {
+        var bruteResult = this.bruteForce(points);
+        return bruteResult;
+      }
+
+      var middleIndex = Math.floor(points.length / 2);
+      var middlePoint = points[middleIndex];
+      var leftPoints = points.slice(0, middleIndex);
+      var rightPoints = points.slice(middleIndex);
+
+      var leftResult = this._closestPair(leftPoints);
+
+      var rightResult = this._closestPair(rightPoints);
+
+      var combinedResult = leftResult.distance < rightResult.distance ? leftResult : rightResult;
+      var strip = [];
+
+      for (var i = 0; i < points.length; i++) {
+        var point = points[i];
+
+        if (Math.abs(point.x - middlePoint.x) <= combinedResult.distance && point.x >= points[0].x && point.x <= points[points.length - 1].x) {
+          strip.push(point);
+        }
+      }
+
+      var stripResult = this._getMinimumDistanceStrip(strip, combinedResult.distance);
+
+      var totalResult = stripResult.distance < combinedResult.distance ? stripResult : combinedResult;
+      return totalResult;
+    }
+  }, {
+    key: "_getDistance",
+    value: function _getDistance(first, second) {
+      return Math.sqrt(Math.pow(first.x - second.x, 2) + Math.pow(first.y - second.y, 2));
+    }
+  }, {
+    key: "_getMinimumDistanceStrip",
+    value: function _getMinimumDistanceStrip(strip, d) {
+      var minDistance = d;
+      var pointA, pointB;
+
+      for (var i = 0; i < strip.length; i++) {
+        for (var j = i + 1; j < strip.length && strip[j].y - strip[i].y < d; j++) {
+          if (this._getDistance(strip[i], strip[j]) < minDistance) {
+            minDistance = this._getDistance(strip[i], strip[j]);
+            pointA = strip[i];
+            pointB = strip[j];
+          }
         }
       }
 
@@ -300,14 +433,71 @@ exports.default = ClosestPoints;
 
 var _closestPoints = _interopRequireDefault(require("./closest-points"));
 
+var _closestPointsPure = _interopRequireDefault(require("./closest-points-pure"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-// const testPoints = [{ x: 2, y: 3 }, { x: 12, y: 30 }, { x: 40, y: 50 }, { x: 5, y: 1 }, { x: 12, y: 10 }, { x: 3, y: 4 }];
-// const closestPoints = new ClosestPoints();
-// console.log(testPoints);
-// console.log(closestPoints.divideAndConquer(testPoints));
-// console.log(closestPoints.bruteForce(testPoints));
+function test() {
+  var closestPoints = new _closestPointsPure.default();
+  var smallArray = [{
+    x: 2,
+    y: 3
+  }, {
+    x: 12,
+    y: 30
+  }, {
+    x: 40,
+    y: 50
+  }, {
+    x: 5,
+    y: 1
+  }, {
+    x: 12,
+    y: 10
+  }, {
+    x: 3,
+    y: 4
+  }];
+  console.log('Small test:');
+  console.log(closestPoints.divideAndConquer(smallArray));
+  console.log(closestPoints.bruteForce(smallArray));
+  var mediumArray = Array.from({
+    length: 100
+  }, function () {
+    return {
+      x: Math.floor(Math.random() * 500),
+      y: Math.floor(Math.random() * 500)
+    };
+  });
+  console.log('Medium test:');
+  console.log(closestPoints.divideAndConquer(mediumArray));
+  console.log(closestPoints.bruteForce(mediumArray));
+  var bigArray = Array.from({
+    length: 10000
+  }, function () {
+    return {
+      x: Math.floor(Math.random() * 50000),
+      y: Math.floor(Math.random() * 50000)
+    };
+  });
+  console.log('Big test:');
+  console.log(closestPoints.divideAndConquer(bigArray));
+  console.log(closestPoints.bruteForce(bigArray));
+  var largeArray = Array.from({
+    length: 100000
+  }, function () {
+    return {
+      x: Math.random() * 500000,
+      y: Math.random() * 500000
+    };
+  });
+  console.log('Large test:');
+  console.log(closestPoints.divideAndConquer(largeArray));
+  console.log(closestPoints.bruteForce(largeArray));
+} // test();
 // Drawing
+
+
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
 var pointSize = 7;
@@ -318,6 +508,7 @@ var startButton = document.getElementById('start');
 var points = [];
 var eventIndex = -1;
 var events = [];
+var closestDistance = 0;
 
 function drawOnClick(event) {
   var rect = canvas.getBoundingClientRect();
@@ -404,7 +595,6 @@ function clearCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   points = [];
   eventIndex = 0;
-  console.log('evo me');
   nextButton.style.display = 'none';
   backButton.style.display = 'none';
 }
@@ -420,6 +610,9 @@ function next() {
         highlightPoint(_event.pointA.x, _event.pointA.y, '#00000');
         highlightPoint(_event.pointB.x, _event.pointB.y, '#00000');
       }
+    } else {
+      backButton.style.backgroundColor = '#4e9af1';
+      backButton.disabled = false;
     }
 
     eventIndex++;
@@ -429,7 +622,7 @@ function next() {
       highlightRect(event.x, event.y, event.width, event.height, '#fef36f');
     } else if (event.type == 'drawLine') {
       drawLine(event.pointA, event.pointB);
-      drawLabel(event.label, event.pointA, event.pointB); //console.log('label = ' + event.label);
+      drawLabel(event.label, event.pointA, event.pointB);
     } else if (event.type == 'highlightPoints') {
       highlightPoint(event.pointA.x, event.pointA.y, '#ff0000');
       highlightPoint(event.pointB.x, event.pointB.y, '#ff0000');
@@ -456,29 +649,82 @@ function next() {
       drawLabel(event.label, event.pointA, event.pointB);
     }
   }
+
+  if (eventIndex == events.length - 1) {
+    nextButton.disabled = true;
+    nextButton.style.backgroundColor = 'gray';
+    eventIndex++;
+  }
 }
 
 function back() {
   if (eventIndex > 0) {
+    if (eventIndex < events.length) {
+      var _event2 = events[eventIndex];
+
+      if (_event2.type == 'highlightRect') {
+        highlightRect(_event2.x, _event2.y, _event2.width, _event2.height, '#C7C4C0');
+      } else if (_event2.type == 'highlightPoints') {
+        highlightPoint(_event2.pointA.x, _event2.pointA.y, '#00000');
+        highlightPoint(_event2.pointB.x, _event2.pointB.y, '#00000');
+      }
+    } else {
+      nextButton.style.backgroundColor = '#4e9af1';
+      nextButton.disabled = false;
+    }
+
     eventIndex--;
     var event = events[eventIndex];
 
     if (event.type == 'highlightRect') {
-      highlightRect(event.x, event.y, event.width, event.height, '#' + Math.floor(Math.random() * 16777215).toString(16));
-    } else if (event.type == 'highlightRect') {
-      highlightRect(event.x, event.y, event.width, event.height, '#f8f5f0');
+      highlightRect(event.x, event.y, event.width, event.height, '#fef36f');
     } else if (event.type == 'drawLine') {
       drawLine(event.pointA, event.pointB);
+      drawLabel(event.label, event.pointA, event.pointB);
+    } else if (event.type == 'highlightPoints') {
+      highlightPoint(event.pointA.x, event.pointA.y, '#ff0000');
+      highlightPoint(event.pointB.x, event.pointB.y, '#ff0000');
+    } else if (event.type == 'combine') {
+      highlightRect(event.x, event.y, event.width, event.height, '#fef36f');
+      drawLine(event.pointA, event.pointB);
+      drawLabel(event.label, event.pointA, event.pointB);
+    } else if (event.type == 'highlightStrip') {
+      highlightRect(event.x, event.y, event.width, event.height, '#4CAF50');
+      drawLine(event.pointA, event.pointB);
+    } else if (event.type == 'highlightResult') {
+      highlightRect(event.x, event.y, event.width, event.height, '#fef36f');
+      drawLine(event.pointA, event.pointB);
+      drawLabel(event.label, event.pointA, event.pointB);
+    } else if (event.type == 'highlightLeftRight') {
+      highlightRect(event.x, event.y, event.width, event.height, '#fef36f');
+      drawLine(event.pointLeftA, event.pointLeftB);
+      drawLabel(event.labelLeft, event.pointLeftA, event.pointLeftB);
+      drawLine(event.pointRightA, event.pointRightB);
+      drawLabel(event.labelRight, event.pointRightA, event.pointRightB);
+    } else if (event.type == 'highlightFinish') {
+      highlightRect(0, 0, 1024, 530, '#C7C4C0');
+      drawLine(event.pointA, event.pointB);
+      drawLabel(event.label, event.pointA, event.pointB);
     }
+  } else {
+    backButton.disabled = true;
+    backButton.style.backgroundColor = 'gray';
   }
 }
 
 function start() {
+  eventIndex = -1;
+  events = [];
   var closestPoints = new _closestPoints.default();
   var result = closestPoints.divideAndConquer(points);
+  closestDistance = result.distance;
   events = result.events;
   nextButton.style.display = 'inline';
   backButton.style.display = 'inline';
+  backButton.disabled = true;
+  backButton.style.backgroundColor = 'gray';
+  nextButton.style.backgroundColor = '#4e9af1';
+  nextButton.disabled = false;
 }
 
 canvas.addEventListener('click', drawOnClick);
@@ -486,7 +732,7 @@ clearButton.addEventListener('click', clearCanvas);
 nextButton.addEventListener('click', next);
 backButton.addEventListener('click', back);
 startButton.addEventListener('click', start);
-},{"./closest-points":"js/closest-points.js"}],"C:/Users/Fulu/AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./closest-points":"js/closest-points.js","./closest-points-pure":"js/closest-points-pure.js"}],"C:/Users/Fulu/AppData/Roaming/npm/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -513,7 +759,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "65372" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "55473" + '/');
 
   ws.onmessage = function (event) {
     var data = JSON.parse(event.data);
