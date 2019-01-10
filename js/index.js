@@ -2,12 +2,6 @@
 
 import ClosestPoints from './closest-points';
 
-// const testPoints = [{ x: 2, y: 3 }, { x: 12, y: 30 }, { x: 40, y: 50 }, { x: 5, y: 1 }, { x: 12, y: 10 }, { x: 3, y: 4 }];
-// const closestPoints = new ClosestPoints();
-// console.log(testPoints);
-// console.log(closestPoints.divideAndConquer(testPoints));
-// console.log(closestPoints.bruteForce(testPoints));
-
 // Drawing
 
 const canvas = document.getElementById('canvas');
@@ -164,14 +158,48 @@ function next() {
 
 function back() {
   if (eventIndex > 0) {
+    if (eventIndex < events.length) {
+      let event = events[eventIndex];
+      if (event.type == 'highlightRect') {
+        highlightRect(event.x, event.y, event.width, event.height, '#C7C4C0');
+      } else if (event.type == 'highlightPoints') {
+        highlightPoint(event.pointA.x, event.pointA.y, '#00000');
+        highlightPoint(event.pointB.x, event.pointB.y, '#00000');
+      }
+    }
+
     eventIndex--;
     let event = events[eventIndex];
     if (event.type == 'highlightRect') {
-      highlightRect(event.x, event.y, event.width, event.height, '#' + Math.floor(Math.random() * 16777215).toString(16));
-    } else if (event.type == 'highlightRect') {
-      highlightRect(event.x, event.y, event.width, event.height, '#f8f5f0');
+      highlightRect(event.x, event.y, event.width, event.height, '#fef36f');
     } else if (event.type == 'drawLine') {
       drawLine(event.pointA, event.pointB);
+      drawLabel(event.label, event.pointA, event.pointB);
+      //console.log('label = ' + event.label);
+    } else if (event.type == 'highlightPoints') {
+      highlightPoint(event.pointA.x, event.pointA.y, '#ff0000');
+      highlightPoint(event.pointB.x, event.pointB.y, '#ff0000');
+    } else if (event.type == 'combine') {
+      highlightRect(event.x, event.y, event.width, event.height, '#fef36f');
+      drawLine(event.pointA, event.pointB);
+      drawLabel(event.label, event.pointA, event.pointB);
+    } else if (event.type == 'highlightStrip') {
+      highlightRect(event.x, event.y, event.width, event.height, '#4CAF50');
+      drawLine(event.pointA, event.pointB);
+    } else if (event.type == 'highlightResult') {
+      highlightRect(event.x, event.y, event.width, event.height, '#fef36f');
+      drawLine(event.pointA, event.pointB);
+      drawLabel(event.label, event.pointA, event.pointB);
+    } else if (event.type == 'highlightLeftRight') {
+      highlightRect(event.x, event.y, event.width, event.height, '#fef36f');
+      drawLine(event.pointLeftA, event.pointLeftB);
+      drawLabel(event.labelLeft, event.pointLeftA, event.pointLeftB);
+      drawLine(event.pointRightA, event.pointRightB);
+      drawLabel(event.labelRight, event.pointRightA, event.pointRightB);
+    } else if (event.type == 'highlightFinish') {
+      highlightRect(0, 0, 1024, 530, '#C7C4C0');
+      drawLine(event.pointA, event.pointB);
+      drawLabel(event.label, event.pointA, event.pointB);
     }
   }
 }
@@ -189,3 +217,5 @@ clearButton.addEventListener('click', clearCanvas);
 nextButton.addEventListener('click', next);
 backButton.addEventListener('click', back);
 startButton.addEventListener('click', start);
+
+
