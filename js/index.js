@@ -2,8 +2,52 @@
 
 import ClosestPoints from './closest-points';
 
-// Drawing
+import ClosestPointsTest from './closest-points-pure';
 
+
+function test() {
+  const closestPoints = new ClosestPointsTest();
+
+  const smallArray = [{ x: 2, y: 3 }, { x: 12, y: 30 }, { x: 40, y: 50 }, { x: 5, y: 1 }, { x: 12, y: 10 }, { x: 3, y: 4 }];
+  console.log('Small test:')
+  console.log(closestPoints.divideAndConquer(smallArray));
+  console.log(closestPoints.bruteForce(smallArray));
+
+  const mediumArray = Array.from({ length: 100 }, () => {
+    return {
+      x: Math.floor(Math.random() * 500),
+      y: Math.floor(Math.random() * 500)
+    };
+  });
+  console.log('Medium test:')
+  console.log(closestPoints.divideAndConquer(mediumArray));
+  console.log(closestPoints.bruteForce(mediumArray));
+
+  const bigArray = Array.from({ length: 10000 }, () => {
+    return {
+      x: Math.floor(Math.random() * 50000),
+      y: Math.floor(Math.random() * 50000)
+    };
+  });
+  console.log('Big test:')
+  console.log(closestPoints.divideAndConquer(bigArray));
+  console.log(closestPoints.bruteForce(bigArray));
+
+  const largeArray = Array.from({ length: 100000 }, () => {
+    return {
+      x: Math.random() * 500000,
+      y: Math.random() * 500000
+    };
+  });
+  console.log('Large test:')
+  console.log(closestPoints.divideAndConquer(largeArray));
+  console.log(closestPoints.bruteForce(largeArray));
+}
+
+// test();
+
+
+// Drawing
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d');
 const pointSize = 7;
@@ -16,6 +60,7 @@ const startButton = document.getElementById('start');
 let points = [];
 let eventIndex = -1;
 let events = [];
+let closestDistance = 0;
 
 function drawOnClick(event) {
   const rect = canvas.getBoundingClientRect();
@@ -103,7 +148,6 @@ function clearCanvas() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   points = [];
   eventIndex = 0;
-  console.log('evo me');
   nextButton.style.display = 'none';
   backButton.style.display = 'none';
 }
@@ -118,6 +162,9 @@ function next() {
         highlightPoint(event.pointA.x, event.pointA.y, '#00000');
         highlightPoint(event.pointB.x, event.pointB.y, '#00000');
       }
+    } else {
+      backButton.style.backgroundColor = '#4e9af1';
+      backButton.disabled = false;
     }
 
     eventIndex++;
@@ -127,7 +174,6 @@ function next() {
     } else if (event.type == 'drawLine') {
       drawLine(event.pointA, event.pointB);
       drawLabel(event.label, event.pointA, event.pointB);
-      //console.log('label = ' + event.label);
     } else if (event.type == 'highlightPoints') {
       highlightPoint(event.pointA.x, event.pointA.y, '#ff0000');
       highlightPoint(event.pointB.x, event.pointB.y, '#ff0000');
@@ -153,6 +199,12 @@ function next() {
       drawLine(event.pointA, event.pointB);
       drawLabel(event.label, event.pointA, event.pointB);
     }
+  }
+
+  if (eventIndex == events.length - 1) {
+    nextButton.disabled = true;
+    nextButton.style.backgroundColor = 'gray';
+    eventIndex++;
   }
 }
 
@@ -166,6 +218,9 @@ function back() {
         highlightPoint(event.pointA.x, event.pointA.y, '#00000');
         highlightPoint(event.pointB.x, event.pointB.y, '#00000');
       }
+    } else {
+      nextButton.style.backgroundColor = '#4e9af1';
+      nextButton.disabled = false;
     }
 
     eventIndex--;
@@ -175,7 +230,6 @@ function back() {
     } else if (event.type == 'drawLine') {
       drawLine(event.pointA, event.pointB);
       drawLabel(event.label, event.pointA, event.pointB);
-      //console.log('label = ' + event.label);
     } else if (event.type == 'highlightPoints') {
       highlightPoint(event.pointA.x, event.pointA.y, '#ff0000');
       highlightPoint(event.pointB.x, event.pointB.y, '#ff0000');
@@ -201,15 +255,25 @@ function back() {
       drawLine(event.pointA, event.pointB);
       drawLabel(event.label, event.pointA, event.pointB);
     }
+  } else {
+    backButton.disabled = true;
+    backButton.style.backgroundColor = 'gray';
   }
 }
 
 function start() {
+  eventIndex = -1
+  events = [];
   let closestPoints = new ClosestPoints();
   let result = closestPoints.divideAndConquer(points);
+  closestDistance = result.distance;
   events = result.events;
   nextButton.style.display = 'inline';
   backButton.style.display = 'inline';
+  backButton.disabled = true;
+  backButton.style.backgroundColor = 'gray';
+  nextButton.style.backgroundColor = '#4e9af1';
+  nextButton.disabled = false;
 }
 
 canvas.addEventListener('click', drawOnClick);
