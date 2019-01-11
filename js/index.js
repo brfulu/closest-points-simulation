@@ -268,6 +268,7 @@ function start() {
   let result = closestPoints.divideAndConquer(points);
   closestDistance = result.distance;
   events = result.events;
+
   nextButton.style.display = 'inline';
   backButton.style.display = 'inline';
   backButton.disabled = true;

@@ -147,6 +147,11 @@ export default class ClosestPoints {
           pointA = strip[i];
           pointB = strip[j];
         }
+        this.events.push({
+          type: 'highlightPoints',
+          pointA: strip[i],
+          pointB: strip[j]
+        });
       }
     }
     return {
